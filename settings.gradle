@@ -1,0 +1,3 @@
+rootProject.name='uber-clone-app'
+include ':app'
+include ':simulator'
