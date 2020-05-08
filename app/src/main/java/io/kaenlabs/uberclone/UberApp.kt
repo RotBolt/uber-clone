@@ -3,7 +3,6 @@ package io.kaenlabs.uberclone
 import android.app.Application
 import com.google.android.libraries.places.api.Places
 import com.google.maps.GeoApiContext
-import com.mindorks.ridesharing.R
 import io.kaenlabs.uberclone.simulator.Simulator
 
 class UberApp : Application() {

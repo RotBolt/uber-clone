@@ -1,22 +1,34 @@
 package io.kaenlabs.uberclone.ui.maps
 
 import android.os.Bundle
+import android.os.Looper
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.maps.*
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+
 import io.kaenlabs.uberclone.R
 import io.kaenlabs.uberclone.data.network.NetworkService
+import io.kaenlabs.uberclone.utils.PermissionUtils
 import io.kaenlabs.uberclone.utils.ViewUtils
 
-class MapsActivity : AppCompatActivity(), MapsView ,OnMapReadyCallback {
+class MapsActivity : AppCompatActivity(), MapsView, OnMapReadyCallback {
 
-    companion object{
+    companion object {
         private const val TAG = "MapsActivity"
+        private const val LOCATION_PERMISSION_CODE = 999
     }
 
     private lateinit var mMap: GoogleMap
     private lateinit var mapsPresenter: MapsPresenter
+    private var fusedLocationProviderClient: FusedLocationProviderClient? = null
+    private lateinit var locationCallback: LocationCallback
+    private var currentLatLng: LatLng? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,5 +43,106 @@ class MapsActivity : AppCompatActivity(), MapsView ,OnMapReadyCallback {
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
+    }
+
+    private fun enableMyLocationOnMap() {
+        mMap.setPadding(0,ViewUtils.dpToPx(48f),0,0)
+        mMap.isMyLocationEnabled = true
+    }
+
+    private fun moveCamera(latLng: LatLng?) {
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng))
+    }
+
+    private fun animateCamera(latLng: LatLng?) {
+        val cameraPosition = CameraPosition.Builder().target(latLng).zoom(15.5f).build()
+        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
+    }
+
+    private fun setUpLocationListener() {
+        fusedLocationProviderClient = FusedLocationProviderClient(this)
+
+        // for getting location updates in every 2 seconds
+        val locationRequest = LocationRequest().apply {
+            interval = 2000
+            fastestInterval = 2000
+            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        }
+
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult) {
+                super.onLocationResult(locationResult)
+                if (currentLatLng == null) {
+                    for (location in locationResult.locations) {
+                        currentLatLng = LatLng(
+                            location.latitude,
+                            location.longitude
+                        )
+                        enableMyLocationOnMap()
+                        moveCamera(currentLatLng)
+                        animateCamera(currentLatLng)
+                        break
+                    }
+                }
+            }
+        }
+
+        fusedLocationProviderClient?.requestLocationUpdates(
+            locationRequest,
+            locationCallback,
+            Looper.myLooper()
+        )
+    }
+
+    override fun onStart() {
+        super.onStart()
+        when {
+            PermissionUtils.isPermissionFineLocationGranted(this) -> {
+                when {
+                    PermissionUtils.isLocationEnabled(this) -> {
+                        setUpLocationListener()
+                    }
+                    else -> {
+                        PermissionUtils.showGPSNotEnabledDialog(this)
+                    }
+                }
+            }
+            else -> {
+                PermissionUtils.requestAccessFineLocationGranted(this, LOCATION_PERMISSION_CODE)
+            }
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            LOCATION_PERMISSION_CODE -> {
+                when {
+                    PermissionUtils.isLocationEnabled(this) -> {
+                        setUpLocationListener()
+                    }
+                    else -> {
+                        PermissionUtils.showGPSNotEnabledDialog(this)
+                    }
+                }
+            }
+            else -> {
+                Toast.makeText(
+                    this,
+                    getString(R.string.location_permission_not_granted_info),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+
+    }
+
+    override fun onDestroy() {
+        mapsPresenter.onDetach()
+        super.onDestroy()
     }
 }

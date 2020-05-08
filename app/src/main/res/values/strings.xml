@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Uber Clone</string>
+    <string name="gps_enable">Enable GPS</string>
+    <string name="gps_required_info">Required to get the location details</string>
+    <string name="gps_enable_btn_label">Enable Now</string>
+    <string name="location_permission_not_granted_info">Location Permission Required for this App</string>
 </resources>
