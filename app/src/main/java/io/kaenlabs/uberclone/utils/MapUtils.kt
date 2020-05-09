@@ -44,10 +44,10 @@ object MapUtils {
             }
             // Third Quadrant
             startLatLng.latitude >= endLatLng.latitude && startLatLng.longitude >= endLatLng.longitude -> {
-                rotation = (180 + Math.toDegrees(atan(lngDiff / latDiff))).toFloat()
+                rotation = (Math.toDegrees(atan(lngDiff / latDiff)) + 180).toFloat()
             }
             // Fourth Quadrant
-            startLatLng.latitude >= endLatLng.latitude && startLatLng.longitude < endLatLng.longitude -> {
+            startLatLng.latitude < endLatLng.latitude && startLatLng.longitude >= endLatLng.longitude -> {
                 rotation = ((90 - Math.toDegrees(atan(lngDiff / latDiff))) + 270).toFloat()
             }
         }

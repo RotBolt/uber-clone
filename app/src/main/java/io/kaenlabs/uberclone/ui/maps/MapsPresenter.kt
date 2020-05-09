@@ -67,7 +67,7 @@ class MapsPresenter(private val networkService: NetworkService) : WebSocketListe
             Constants.CAB_BOOKED -> {
                 view?.informCabBooked()
             }
-            Constants.PICKUP_PATH -> {
+            Constants.PICKUP_PATH, Constants.TRIP_PATH -> {
                 handleOnMessageRequestACab(jsonObject)
             }
             Constants.LOCATION -> {
@@ -81,6 +81,12 @@ class MapsPresenter(private val networkService: NetworkService) : WebSocketListe
             }
             Constants.CAB_ARRIVED -> {
                 view?.informCabArrived()
+            }
+            Constants.TRIP_START -> {
+                view?.informTripStart()
+            }
+            Constants.TRIP_END -> {
+                view?.informTripEnd()
             }
         }
     }
