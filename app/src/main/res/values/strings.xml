@@ -10,4 +10,5 @@
     <string name="take_next_ride">Take Next Ride</string>
     <string name="requesting_your_cab">Requesting your cab</string>
     <string name="current_location">Current Location</string>
+    <string name="cab_is_booked">Your cab is booked</string>
 </resources>

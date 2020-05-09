@@ -34,6 +34,19 @@ class MapsPresenter(private val networkService: NetworkService) : WebSocketListe
         webSocket.sendMessage(jsonObject.toString())
     }
 
+    fun requestACab(pickupLatLng: LatLng, dropLatLng: LatLng) {
+        val jsonObject = JSONObject().apply {
+            with(Constants) {
+                put(TYPE, REQUEST_CAB)
+                put(PICKUP_LAT, pickupLatLng.latitude)
+                put(PICKUP_LNG, pickupLatLng.longitude)
+                put(DROP_LAT, dropLatLng.latitude)
+                put(DROP_LNG, dropLatLng.longitude)
+            }
+        }
+        webSocket.sendMessage(jsonObject.toString())
+    }
+
 
     fun onDetach() {
         webSocket.disconnect()
@@ -47,20 +60,37 @@ class MapsPresenter(private val networkService: NetworkService) : WebSocketListe
     override fun onMessage(data: String) {
         Log.d(TAG, "onMessage : $data")
         val jsonObject = JSONObject(data)
-        when(jsonObject.get(Constants.TYPE)){
+        when (jsonObject.get(Constants.TYPE)) {
             Constants.NEAR_BY_CABS -> {
                 handleOnMessageNearByCabs(jsonObject)
+            }
+            Constants.CAB_BOOKED ->{
+                view?.informCabBooked()
+            }
+            Constants.PICKUP_PATH->{
+                handleOnMessageRequestACab(jsonObject)
             }
         }
     }
 
-    private fun handleOnMessageNearByCabs(jsonObject: JSONObject){
-        val nearByCabLocations = arrayListOf<LatLng>()
-        val jsonArray = jsonObject.getJSONArray(Constants.LOCATIONS)
-        for (i in 0 until jsonArray.length()){
+    private fun handleOnMessageRequestACab(jsonObject: JSONObject){
+        val jsonArray = jsonObject.getJSONArray(Constants.PATH)
+        val pickUpPath = arrayListOf<LatLng>()
+        for (i in 0 until jsonArray.length()) {
             val lat = (jsonArray.get(i) as JSONObject).getDouble(Constants.LAT)
             val lng = (jsonArray.get(i) as JSONObject).getDouble(Constants.LNG)
-            nearByCabLocations.add(LatLng(lat,lng))
+            pickUpPath.add(LatLng(lat, lng))
+        }
+        view?.showPath(pickUpPath)
+    }
+
+    private fun handleOnMessageNearByCabs(jsonObject: JSONObject) {
+        val nearByCabLocations = arrayListOf<LatLng>()
+        val jsonArray = jsonObject.getJSONArray(Constants.LOCATIONS)
+        for (i in 0 until jsonArray.length()) {
+            val lat = (jsonArray.get(i) as JSONObject).getDouble(Constants.LAT)
+            val lng = (jsonArray.get(i) as JSONObject).getDouble(Constants.LNG)
+            nearByCabLocations.add(LatLng(lat, lng))
         }
         view?.showNearByCabs(nearByCabLocations)
     }
