@@ -1,29 +1,39 @@
 package io.kaenlabs.uberclone.ui.maps
 
+import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.gms.common.api.Status
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.*
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.widget.Autocomplete
+import com.google.android.libraries.places.widget.AutocompleteActivity
+import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
 
 import io.kaenlabs.uberclone.R
 import io.kaenlabs.uberclone.data.network.NetworkService
 import io.kaenlabs.uberclone.utils.MapUtils
 import io.kaenlabs.uberclone.utils.PermissionUtils
 import io.kaenlabs.uberclone.utils.ViewUtils
+import kotlinx.android.synthetic.main.activity_maps.*
 
 class MapsActivity : AppCompatActivity(), MapsView, OnMapReadyCallback {
 
     companion object {
         private const val TAG = "MapsActivity"
         private const val LOCATION_PERMISSION_CODE = 999
+        private const val PICKUP_REQUEST_CODE = 998
+        private const val DROP_REQUEST_CODE = 997
     }
 
     private lateinit var mMap: GoogleMap
@@ -31,6 +41,9 @@ class MapsActivity : AppCompatActivity(), MapsView, OnMapReadyCallback {
     private var fusedLocationProviderClient: FusedLocationProviderClient? = null
     private lateinit var locationCallback: LocationCallback
     private var currentLatLng: LatLng? = null
+    private var pickupLatLng: LatLng? = null
+    private var dropLatLng: LatLng? = null
+
     private val nearByCabMarkerList = arrayListOf<Marker>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,10 +55,28 @@ class MapsActivity : AppCompatActivity(), MapsView, OnMapReadyCallback {
         mapFragment.getMapAsync(this)
         mapsPresenter = MapsPresenter(NetworkService())
         mapsPresenter.onAttach(this)
+        setupClickListeners()
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
+    }
+
+    private fun setupClickListeners() {
+        pickUpTextView.setOnClickListener {
+            launchLocationAutoCompleteActivity(PICKUP_REQUEST_CODE)
+        }
+
+        dropTextView.setOnClickListener {
+            launchLocationAutoCompleteActivity(DROP_REQUEST_CODE)
+        }
+    }
+
+    private fun launchLocationAutoCompleteActivity(requestCode: Int) {
+        val fields = listOf<Place.Field>(Place.Field.ID, Place.Field.NAME, Place.Field.LAT_LNG)
+        val intent =
+            Autocomplete.IntentBuilder(AutocompleteActivityMode.OVERLAY, fields).build(this)
+        startActivityForResult(intent, requestCode)
     }
 
     private fun enableMyLocationOnMap() {
@@ -81,7 +112,8 @@ class MapsActivity : AppCompatActivity(), MapsView, OnMapReadyCallback {
                             location.latitude,
                             location.longitude
                         )
-                        Log.d(TAG,"lat ${location.latitude} long ${location.longitude}")
+                        setCurrentLocationAsPickup()
+                        Log.d(TAG, "lat ${location.latitude} long ${location.longitude}")
                         enableMyLocationOnMap()
                         moveCamera(currentLatLng)
                         animateCamera(currentLatLng)
@@ -97,6 +129,11 @@ class MapsActivity : AppCompatActivity(), MapsView, OnMapReadyCallback {
             locationCallback,
             Looper.myLooper()
         )
+    }
+
+    private fun setCurrentLocationAsPickup(){
+        pickupLatLng = currentLatLng
+        pickUpTextView.text = getString(R.string.current_location)
     }
 
     override fun onStart() {
@@ -145,6 +182,36 @@ class MapsActivity : AppCompatActivity(), MapsView, OnMapReadyCallback {
             }
         }
 
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == PICKUP_REQUEST_CODE || requestCode == DROP_REQUEST_CODE) {
+            when (resultCode) {
+                Activity.RESULT_OK -> {
+                    val place = Autocomplete.getPlaceFromIntent(data!!)
+                    when (requestCode) {
+                        PICKUP_REQUEST_CODE -> {
+                            pickUpTextView.text = place.name
+                            pickupLatLng = place.latLng
+                        }
+                        DROP_REQUEST_CODE -> {
+                            dropTextView.text = place.name
+                            dropLatLng = place.latLng
+                        }
+                    }
+                }
+                AutocompleteActivity.RESULT_ERROR -> {
+                    val status: Status = Autocomplete.getStatusFromIntent(data!!)
+                    Log.e(TAG, "error ${status.statusMessage}")
+                }
+                AutocompleteActivity.RESULT_CANCELED -> {
+                    val status: Status = Autocomplete.getStatusFromIntent(data!!)
+                    Log.d(TAG, "User cancelled ${status.statusMessage}")
+                }
+            }
+
+        }
     }
 
     override fun onDestroy() {

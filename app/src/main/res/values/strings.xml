@@ -4,4 +4,10 @@
     <string name="gps_required_info">Required to get the location details</string>
     <string name="gps_enable_btn_label">Enable Now</string>
     <string name="location_permission_not_granted_info">Location Permission Required for this App</string>
+    <string name="where_to">Where to?</string>
+    <string name="pickup_location">Pickup Location</string>
+    <string name="request_cab">Request Cab</string>
+    <string name="take_next_ride">Take Next Ride</string>
+    <string name="requesting_your_cab">Requesting your cab</string>
+    <string name="current_location">Current Location</string>
 </resources>
