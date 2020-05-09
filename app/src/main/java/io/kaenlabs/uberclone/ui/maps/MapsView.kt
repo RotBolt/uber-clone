@@ -12,4 +12,8 @@ interface MapsView {
 
     fun updateCabLocation(latLng: LatLng)
 
+    fun informCabIsArriving()
+
+    fun informCabArrived()
+
 }

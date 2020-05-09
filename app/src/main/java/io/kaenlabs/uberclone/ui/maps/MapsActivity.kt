@@ -342,6 +342,10 @@ class MapsActivity : AppCompatActivity(), MapsView, OnMapReadyCallback {
                         multiplier * currentCabLatLng!!.longitude + (1 - multiplier) * prevCabLatLng!!.longitude
                     )
                     movingCabMarker?.position = nextLocation
+                    val rotation = MapUtils.getRotation(prevCabLatLng!!, nextLocation)
+                    if(!rotation.isNaN()){
+                        movingCabMarker?.rotation = rotation
+                    }
                     movingCabMarker?.setAnchor(0.5f, 0.5f)
                     animateCamera(nextLocation)
                 }
@@ -350,5 +354,17 @@ class MapsActivity : AppCompatActivity(), MapsView, OnMapReadyCallback {
 
 
         }
+    }
+
+    override fun informCabIsArriving() {
+        statusTextView.text = getString(R.string.cab_is_arriving)
+    }
+
+    override fun informCabArrived() {
+        statusTextView.text = getString(R.string.cab_arrived)
+        greyPolyLine?.remove()
+        blackPolyLine?.remove()
+        originMarker?.remove()
+        destinationMarker?.remove()
     }
 }
