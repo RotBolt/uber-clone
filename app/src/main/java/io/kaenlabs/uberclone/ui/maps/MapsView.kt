@@ -10,4 +10,6 @@ interface MapsView {
 
     fun showPath(latLngList: List<LatLng>)
 
+    fun updateCabLocation(latLng: LatLng)
+
 }

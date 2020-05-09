@@ -10,4 +10,9 @@ object AnimationUtils {
         duration = 3500
     }
 
+    fun cabAnimator(): ValueAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
+        duration = 3000
+        interpolator = LinearInterpolator()
+    }
+
 }

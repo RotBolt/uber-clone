@@ -47,6 +47,8 @@ class MapsActivity : AppCompatActivity(), MapsView, OnMapReadyCallback {
     private var currentLatLng: LatLng? = null
     private var pickupLatLng: LatLng? = null
     private var dropLatLng: LatLng? = null
+    private var prevCabLatLng: LatLng? = null
+    private var currentCabLatLng: LatLng? = null
 
     private var greyPolyLine: Polyline? = null
     private var blackPolyLine: Polyline? = null
@@ -54,6 +56,8 @@ class MapsActivity : AppCompatActivity(), MapsView, OnMapReadyCallback {
     private val nearByCabMarkerList = arrayListOf<Marker>()
     private var originMarker: Marker? = null
     private var destinationMarker: Marker? = null
+    private var movingCabMarker: Marker? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -313,5 +317,38 @@ class MapsActivity : AppCompatActivity(), MapsView, OnMapReadyCallback {
         }
         polylineAnimator.start()
 
+    }
+
+    override fun updateCabLocation(latLng: LatLng) {
+        if (movingCabMarker == null) {
+            movingCabMarker = addCarMarkerAndGet(latLng)
+        }
+
+        if (prevCabLatLng == null) {
+            currentCabLatLng = latLng
+            prevCabLatLng = currentCabLatLng
+            movingCabMarker?.position = currentCabLatLng
+            movingCabMarker?.setAnchor(0.5f, 0.5f)
+            animateCamera(currentCabLatLng)
+        } else {
+            prevCabLatLng = currentCabLatLng
+            currentCabLatLng = latLng
+            val valueAnimator = AnimationUtils.cabAnimator()
+            valueAnimator.addUpdateListener {
+                if (currentCabLatLng != null && prevCabLatLng != null) {
+                    val multiplier = it.animatedFraction
+                    val nextLocation = LatLng(
+                        multiplier * currentCabLatLng!!.latitude + (1 - multiplier) * prevCabLatLng!!.latitude,
+                        multiplier * currentCabLatLng!!.longitude + (1 - multiplier) * prevCabLatLng!!.longitude
+                    )
+                    movingCabMarker?.position = nextLocation
+                    movingCabMarker?.setAnchor(0.5f, 0.5f)
+                    animateCamera(nextLocation)
+                }
+            }
+            valueAnimator.start()
+
+
+        }
     }
 }

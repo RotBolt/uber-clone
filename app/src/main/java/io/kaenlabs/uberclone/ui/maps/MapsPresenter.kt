@@ -64,16 +64,22 @@ class MapsPresenter(private val networkService: NetworkService) : WebSocketListe
             Constants.NEAR_BY_CABS -> {
                 handleOnMessageNearByCabs(jsonObject)
             }
-            Constants.CAB_BOOKED ->{
+            Constants.CAB_BOOKED -> {
                 view?.informCabBooked()
             }
-            Constants.PICKUP_PATH->{
+            Constants.PICKUP_PATH -> {
                 handleOnMessageRequestACab(jsonObject)
+            }
+            Constants.LOCATION -> {
+                val lat = jsonObject.getDouble(Constants.LAT)
+                val lng = jsonObject.getDouble(Constants.LNG)
+                view?.updateCabLocation(LatLng(lat, lng))
+
             }
         }
     }
 
-    private fun handleOnMessageRequestACab(jsonObject: JSONObject){
+    private fun handleOnMessageRequestACab(jsonObject: JSONObject) {
         val jsonArray = jsonObject.getJSONArray(Constants.PATH)
         val pickUpPath = arrayListOf<LatLng>()
         for (i in 0 until jsonArray.length()) {
