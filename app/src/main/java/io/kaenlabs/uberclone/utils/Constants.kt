@@ -21,5 +21,8 @@ object Constants {
     const val DROP_LNG = "dropLng"
     const val LAT = "lat"
     const val LNG = "lng"
+    const val ROUTES_NOT_AVAILABLE = "routesNotAvailable"
+    const val DIRECTION_API_FAILED = "directionApiFailed"
+    const val ERROR = "error"
 
 }

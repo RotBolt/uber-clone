@@ -119,6 +119,19 @@ class MapsPresenter(private val networkService: NetworkService) : WebSocketListe
 
     override fun onError(error: String) {
         Log.e(TAG, "onError : $error")
+        val jsonObject = JSONObject(error)
+        when (jsonObject.getString(Constants.TYPE)) {
+            Constants.ROUTES_NOT_AVAILABLE -> {
+                view?.showRoutesNotAvailableError()
+            }
+            Constants.DIRECTION_API_FAILED -> {
+                view?.showDirectionAPiFailedError(
+                    "Direction Api failed : ${jsonObject.getString(
+                        Constants.ERROR
+                    )}"
+                )
+            }
+        }
     }
 
 }

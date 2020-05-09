@@ -92,6 +92,9 @@ class MapsActivity : AppCompatActivity(), MapsView, OnMapReadyCallback {
             dropTextView.isEnabled = false
             mapsPresenter.requestACab(pickupLatLng!!, dropLatLng!!)
         }
+        nextRideButton.setOnClickListener {
+            reset()
+        }
     }
 
     private fun checkAndShowRequestButton() {
@@ -101,8 +104,47 @@ class MapsActivity : AppCompatActivity(), MapsView, OnMapReadyCallback {
         }
     }
 
+    private fun reset(){
+        statusTextView.visibility = View.GONE
+        nextRideButton.visibility = View.GONE
+        nearByCabMarkerList.forEach {
+            it.remove()
+        }
+        nearByCabMarkerList.clear()
+        currentCabLatLng = null
+        prevCabLatLng = null
+        if(currentLatLng != null){
+            moveCamera(currentLatLng)
+            animateCamera(currentLatLng)
+            setCurrentLocationAsPickup()
+            mapsPresenter.requestNearByCabs(currentLatLng!!)
+        }else{
+            pickUpTextView.text = ""
+        }
+        pickUpTextView.isEnabled = true
+        dropTextView.isEnabled = true
+        dropTextView.text = ""
+
+        movingCabMarker?.remove()
+        greyPolyLine?.remove()
+        blackPolyLine?.remove()
+
+        originMarker?.remove()
+        destinationMarker?.remove()
+
+        dropLatLng = null
+
+        greyPolyLine = null
+        blackPolyLine = null
+
+        originMarker = null
+        destinationMarker = null
+        movingCabMarker = null
+
+    }
+
     private fun launchLocationAutoCompleteActivity(requestCode: Int) {
-        val fields = listOf<Place.Field>(Place.Field.ID, Place.Field.NAME, Place.Field.LAT_LNG)
+        val fields = listOf(Place.Field.ID, Place.Field.NAME, Place.Field.LAT_LNG)
         val intent =
             Autocomplete.IntentBuilder(AutocompleteActivityMode.OVERLAY, fields).build(this)
         startActivityForResult(intent, requestCode)
@@ -167,19 +209,21 @@ class MapsActivity : AppCompatActivity(), MapsView, OnMapReadyCallback {
 
     override fun onStart() {
         super.onStart()
-        when {
-            PermissionUtils.isPermissionFineLocationGranted(this) -> {
-                when {
-                    PermissionUtils.isLocationEnabled(this) -> {
-                        setUpLocationListener()
-                    }
-                    else -> {
-                        PermissionUtils.showGPSNotEnabledDialog(this)
+        if(currentLatLng == null){
+            when {
+                PermissionUtils.isPermissionFineLocationGranted(this) -> {
+                    when {
+                        PermissionUtils.isLocationEnabled(this) -> {
+                            setUpLocationListener()
+                        }
+                        else -> {
+                            PermissionUtils.showGPSNotEnabledDialog(this)
+                        }
                     }
                 }
-            }
-            else -> {
-                PermissionUtils.requestAccessFineLocationGranted(this, LOCATION_PERMISSION_CODE)
+                else -> {
+                    PermissionUtils.requestAccessFineLocationGranted(this, LOCATION_PERMISSION_CODE)
+                }
             }
         }
     }
@@ -247,6 +291,7 @@ class MapsActivity : AppCompatActivity(), MapsView, OnMapReadyCallback {
 
     override fun onDestroy() {
         mapsPresenter.onDetach()
+        fusedLocationProviderClient?.removeLocationUpdates(locationCallback)
         super.onDestroy()
     }
 
@@ -375,9 +420,21 @@ class MapsActivity : AppCompatActivity(), MapsView, OnMapReadyCallback {
 
     override fun informTripEnd() {
         statusTextView.text = getString(R.string.trip_end)
+        nextRideButton.visibility = View.VISIBLE
         greyPolyLine?.remove()
         blackPolyLine?.remove()
         originMarker?.remove()
         destinationMarker?.remove()
+    }
+
+    override fun showRoutesNotAvailableError() {
+        val error = getString(R.string.routes_not_available_choose_other_location)
+        Toast.makeText(this,error,Toast.LENGTH_LONG).show()
+        reset()
+    }
+
+    override fun showDirectionAPiFailedError(error: String) {
+        Toast.makeText(this,error,Toast.LENGTH_LONG).show()
+        reset()
     }
 }

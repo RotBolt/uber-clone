@@ -20,4 +20,8 @@ interface MapsView {
 
     fun informTripEnd()
 
+    fun showRoutesNotAvailableError()
+
+    fun showDirectionAPiFailedError(error: String)
+
 }
