@@ -1,5 +1,5 @@
 # uber-clone
-Uber clone made with help of Mindorks course
+Uber clone made with help of [Mindorks course](https://mindorks.com/android-app-development-online-course-for-professionals)
 
 ## Screenshots
 
